@@ -1,78 +1,81 @@
-Antigene Encryption
+# Antigene Encryption
+
 A TypeScript implementation of Lattice-based Cryptography for secure message encryption and decryption.
-Features
 
-Lattice-based encryption algorithm
-Password-based encryption
-Secure random number generation
-Base64 encoded output
-Customizable parameters for security levels
-TypeScript support with full type definitions
+## Installation
 
-Installation
-bashCopynpm install antigene-encryption
-Usage
-typescriptCopyimport { createEncryptionService } from 'antigene-encryption';
+Install @antigene/encryption with npm
 
-// Basic Example
-async function example() {
-// Create an encryption service instance
+```bash
+  npm install @antigene/encryption
+```
+
+## Usage
+
+#### 1. Import Package
+
+```typescript
+import { createEncryptionService } from "@antigane/encryption";
+```
+
+#### 2. Create Instance Encryption
+
+```typescript
 const encryptionService = createEncryptionService();
+```
 
-// Encrypt a message
-const message = "Hello, World!";
-const password = "mySecurePassword";
+- m : total field Matrics (default. 128)
+- n : total column Matrics (default. 64)
+- q : Mod for math operation (default. 2053)
 
-const encrypted = await encryptionService.encrypt(message, password);
-console.log('Encrypted:', encrypted);
+#### 3. Encryption
 
-// Decrypt the message
-const decrypted = await encryptionService.decrypt(encrypted, password);
-console.log('Decrypted:', decrypted); // "Hello, World!"
+```typescript
+const encryptedData = await encryptionService.encrypt(
+  "Hello, World!",
+  "password"
+);
+console.log("Encrypted Data:", encryptedData.data);
+```
+
+#### 4. Decryption
+
+```typescript
+const decryptedMessage = await encryptionService.decrypt(
+  encryptedData,
+  "password"
+);
+console.log("Decrypted Message:", decryptedMessage);
+```
+
+## Example
+
+```typescript
+import { createEncryptionService } from "@antigane/encryption";
+
+async function main() {
+  const encryptionService = createEncryptionService();
+
+  // Enkripsi pesan
+  const encryptedData = await encryptionService.encrypt(
+    "Hello, World!",
+    "password"
+  );
+  console.log("Encrypted Data:", encryptedData.data);
+
+  // Dekripsi pesan
+  const decryptedMessage = await encryptionService.decrypt(
+    encryptedData,
+    "password"
+  );
+  console.log("Decrypted Message:", decryptedMessage);
 }
 
-// Custom Parameters Example
-const m = 256; // Matrix width
-const n = 128; // Matrix height
-const q = 4093; // Modulus
-const customEncryption = createEncryptionService(m, n, q);
-API Reference
-createEncryptionService(m?: number, n?: number, q?: number)
-Creates a new instance of the encryption service with optional parameters:
+main();
+```
 
-m: Matrix width (default: 128)
-n: Matrix height (default: 64)
-q: Modulus (default: 2053)
+![Logo](https://avatars.githubusercontent.com/u/194663842?s=200&v=4)
 
-encrypt(msg: string, password: string): Promise<EncryptedData>
-Encrypts a message using the provided password.
-decrypt(encryptedData: EncryptedData, password: string): Promise<string>
-Decrypts an encrypted message using the provided password.
-Types
-typescriptCopyinterface EncryptionParams {
-A: number[][];
-E: number[];
-q: number;
-}
+## Authors
 
-interface EncryptedData {
-data: string;
-params: EncryptionParams;
-}
-Security Considerations
-
-Based on Learning With Errors (LWE) problem
-Use strong passwords
-Default parameters balance security and performance
-Increase matrix dimensions (m, n) for higher security
-
-Requirements
-
-Node.js version 12+
-Web Crypto API support
-Buffer support
-
-License
-MIT
-Contributing
-Contributions welcome! Please submit Pull Requests.
+- [@ranaufalmuha](https://www.github.com/ranaufalmuha)
