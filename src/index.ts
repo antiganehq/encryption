@@ -1,5 +1,6 @@
 // encryption.ts  
-import { Buffer } from "buffer";  
+import {SHA256}  from "./sha256";  
+import {Base64}  from "./base64";  
   
 export interface EncryptionParams {  
   A: number[][];  
@@ -34,9 +35,9 @@ export class AntigeneEncryption {
   }  
   
   private getSecureRandom(max: number): number {  
-    const array = new Uint32Array(1);  
-    window.crypto.getRandomValues(array);  
-    return this.mod(array[0], max);  
+    const timestamp = Date.now();
+    const random = Math.sin(timestamp) * 10000;
+    return this.mod(Math.floor(Math.abs(random)), max);
   }  
   
   private defineA() {  
@@ -50,11 +51,15 @@ export class AntigeneEncryption {
   }  
   
   private async generateHash(message: string): Promise<number[]> {  
-    const encoder = new TextEncoder();  
-    const data = encoder.encode(message);  
-    const hashBuffer = await crypto.subtle.digest("SHA-256", data);  
-    const hashArray = Array.from(new Uint8Array(hashBuffer));  
-    return hashArray.map((byte) => this.mod(byte, this.q));  
+    const hashHex = await SHA256.hash(message);
+    const hashBytes: number[] = [];
+    
+    for (let i = 0; i < hashHex.length; i += 2) {
+      const byte = parseInt(hashHex.substr(i, 2), 16);
+      hashBytes.push(this.mod(byte, this.q));
+    }
+    
+    return hashBytes;
   }  
   
   private async sVector(password: string) {  
@@ -95,7 +100,7 @@ export class AntigeneEncryption {
     const cyphertext = ascii.map((val, idx) => this.mod(val + b[idx % b.length], this.q));  
   
     return {  
-      data: this.arrayToBase64(cyphertext),  
+      data: Base64.encode(cyphertext),
       params: {  
         A: this.A,  
         E: this.e,  
@@ -110,19 +115,13 @@ export class AntigeneEncryption {
     this.q = encryptedData.params.q;  
     await this.sVector(password);  
   
-    const fromBase64 = this.base64ToArray(encryptedData.data);  
-    const b = this.calculateB();  
+    const cyphertext = Base64.decode(encryptedData.data);
+    const b = this.calculateB();
   
-    const decrypted = fromBase64.map((val, idx) => this.mod(val - b[idx % b.length], this.q));  
-    return String.fromCharCode(...decrypted);  
-  }  
-  
-  private arrayToBase64(arr: number[]): string {  
-    return Buffer.from(JSON.stringify(arr)).toString("base64");  
-  }  
-  
-  private base64ToArray(base64: string): number[] {  
-    return JSON.parse(Buffer.from(base64, "base64").toString());  
+    const decrypted = cyphertext.map((val, idx) => 
+      this.mod(val - b[idx % b.length], this.q)
+    );
+    return String.fromCharCode(...decrypted);
   }  
 }  
   
