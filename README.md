@@ -1,13 +1,13 @@
-# Antigene Encryption
+# Antigane Encryption
 
 A TypeScript implementation of Lattice-based Cryptography for secure message encryption and decryption.
 
 ## Installation
 
-Install @antigene/encryption with npm
+Install @antigane/encryption with npm
 
 ```bash
-  npm install @antigene/encryption
+  npm install @antigane/encryption
 ```
 
 ## Usage

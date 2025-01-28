@@ -1,11 +1,11 @@
 {
   "name": "@antigane/encryption",
   "description": "encryption with Lattice-based Cryptography",
-  "version": "0.0.4",
+  "version": "0.0.7",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
-  "homepage": "https://www.ranaufalmuha.tech/",
+  "homepage": "https://github.com/antiganehq",
   "repository": {
     "url": "git+https://github.com/antiganehq/encryption.git"
   },
