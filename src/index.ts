@@ -10,6 +10,12 @@ export interface EncryptedData {
   params: EncryptionParams;
 }
 
+export interface OpenLockConfig {
+  enabled: boolean;
+  expiresAt: number;
+  hashedPassword: number[];
+}
+
 export class AntigeneEncryption {
   private m: number;
   private n: number;
@@ -17,6 +23,7 @@ export class AntigeneEncryption {
   private A: number[][];
   private s: number[];
   private e: number[];
+  private lock: OpenLockConfig;
 
   constructor(m: number, n: number, q: number = 2053) {
     this.m = m;
@@ -25,8 +32,44 @@ export class AntigeneEncryption {
     this.A = [];
     this.s = [];
     this.e = [];
+    this.lock = {
+      enabled: false,
+      expiresAt: 0,
+      hashedPassword: []
+    };
   }
 
+  // Lock System ================================
+  public async openLock(minutes: number = 10, password: string): Promise<void> {
+    const hashedPassword = await this.generateHash(password);
+    const decryptMsg = await this.decrypt(await this.encrypt("openLock", password), password);
+    if (decryptMsg == "openLock") {
+      this.lock = {
+        enabled: true,
+        expiresAt: Date.now() + minutes * 60 * 1000,
+        hashedPassword: hashedPassword
+      };
+    }
+  }
+
+  public closeLock(): void {
+    this.lock = {
+      enabled: false,
+      expiresAt: 0,
+      hashedPassword: []
+    };
+  }
+
+  public isLockOpen(): boolean {
+    if (!this.lock.enabled) return false;
+    if (Date.now() > this.lock.expiresAt) {
+      this.closeLock();
+      return false;
+    }
+    return true;
+  }
+
+  // Encryption ================================
   private mod(x: number, q: number): number {
     let result = x % q;
     return result >= 0 ? result : result + q;
@@ -100,10 +143,21 @@ export class AntigeneEncryption {
     return result.map((val, idx) => this.mod(val + this.e[idx], this.q));
   }
 
-  async encrypt(msg: string, password: string): Promise<EncryptedData> {
+  async encrypt(msg: string, password?: string): Promise<EncryptedData> {
+    // if OpenLock active
+    if (!password && this.isLockOpen()) {
+      this.s = [...this.lock.hashedPassword];
+      while (this.s.length < this.n) {
+        this.s.push(this.s[this.s.length % this.lock.hashedPassword.length]);
+      }
+    } else if (!password) {
+      throw new Error("Password required when OpenLock is not active");
+    } else {
+      await this.sVector(password);
+    }
+
     this.defineA();
     this.defineE();
-    await this.sVector(password);
 
     const ascii = Array.from(msg).map((char) =>
       this.mod(char.charCodeAt(0), this.q)
@@ -126,12 +180,23 @@ export class AntigeneEncryption {
 
   async decrypt(
     encryptedData: EncryptedData,
-    password: string
+    password?: string
   ): Promise<string> {
+    // if OpenLock active
+    if (!password && this.isLockOpen()) {
+      this.s = [...this.lock.hashedPassword];
+      while (this.s.length < this.n) {
+        this.s.push(this.s[this.s.length % this.lock.hashedPassword.length]);
+      }
+    } else if (!password) {
+      throw new Error("Password required when OpenLock is not active");
+    } else {
+      await this.sVector(password);
+    }
+
     this.A = encryptedData.params.A;
     this.e = encryptedData.params.E;
     this.q = encryptedData.params.q;
-    await this.sVector(password);
 
     const fromBase64 = this.base64ToArray(encryptedData.data);
     const b = this.calculateB();
