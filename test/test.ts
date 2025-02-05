@@ -31,7 +31,7 @@ async function runTests() {
 
         // Contoh penggunaan OpenLock
         console.log('\nTesting OpenLock feature...');
-        await encryptionService.openLock(0.1, password);
+        await encryptionService.openLock(0.1, "password", encrypted);
         if (encryptionService.isLockOpen()) {
             console.log('OpenLock is active.');
         } else {
