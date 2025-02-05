@@ -24,6 +24,7 @@ export class AntigeneEncryption {
   private s: number[];
   private e: number[];
   private lock: OpenLockConfig;
+  private dummyData: EncryptedData | null;
 
   constructor(m: number, n: number, q: number = 2053) {
     this.m = m;
@@ -37,19 +38,44 @@ export class AntigeneEncryption {
       expiresAt: 0,
       hashedPassword: []
     };
+    this.dummyData = null;
   }
 
   // Lock System ================================
   public async openLock(minutes: number = 10, password: string): Promise<void> {
     const hashedPassword = await this.generateHash(password);
-    const decryptMsg = await this.decrypt(await this.encrypt("openLock", password), password);
-    if (decryptMsg == "openLock") {
-      this.lock = {
-        enabled: true,
-        expiresAt: Date.now() + minutes * 60 * 1000,
-        hashedPassword: hashedPassword
-      };
+    if (this.dummyData) {
+      const decryptMsg = await this.decrypt(this.dummyData, password);
+      if (decryptMsg === "openLock") {
+        this.lock = {
+          enabled: true,
+          expiresAt: Date.now() + minutes * 60 * 1000,
+          hashedPassword: hashedPassword
+        };
+      } else {
+        throw new Error("Your Password is invalid");
+      }
+    } else {
+      throw new Error("You Need Encrypt the Message First");
     }
+  }
+
+  private defineDummyData(b: number[]) {
+    const msg = "openLock";
+    const ascii = Array.from(msg).map((char) =>
+      this.mod(char.charCodeAt(0), this.q)
+    );
+    const cyphertext = ascii.map((val, idx) =>
+      this.mod(val + b[idx % b.length], this.q)
+    );
+    this.dummyData = {
+      data: this.arrayToBase64(cyphertext),
+      params: {
+        A: this.A,
+        E: this.e,
+        q: this.q,
+      },
+    };
   }
 
   public closeLock(): void {
@@ -143,7 +169,7 @@ export class AntigeneEncryption {
     return result.map((val, idx) => this.mod(val + this.e[idx], this.q));
   }
 
-  async encrypt(msg: string, password?: string): Promise<EncryptedData> {
+  async encrypt(msg: string, password?: string, encryptParams?: EncryptionParams): Promise<EncryptedData> {
     // if OpenLock active
     if (!password && this.isLockOpen()) {
       this.s = [...this.lock.hashedPassword];
@@ -156,8 +182,13 @@ export class AntigeneEncryption {
       await this.sVector(password);
     }
 
-    this.defineA();
-    this.defineE();
+    if (encryptParams) {
+      this.A = encryptParams.A;
+      this.e = encryptParams.E;
+    } else {
+      this.defineA();
+      this.defineE();
+    }
 
     const ascii = Array.from(msg).map((char) =>
       this.mod(char.charCodeAt(0), this.q)
@@ -167,6 +198,7 @@ export class AntigeneEncryption {
     const cyphertext = ascii.map((val, idx) =>
       this.mod(val + b[idx % b.length], this.q)
     );
+    this.defineDummyData(b);
 
     return {
       data: this.arrayToBase64(cyphertext),

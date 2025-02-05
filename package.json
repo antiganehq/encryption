@@ -1,7 +1,7 @@
 {
   "name": "@antigane/encryption",
   "description": "encryption with Lattice-based Cryptography",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -10,7 +10,8 @@
     "url": "git+https://github.com/antiganehq/encryption.git"
   },
   "scripts": {
-    "build": "tsup"
+    "build": "tsup",
+    "test": "npx ts-node test/test.ts"
   },
   "keywords": [
     "cyptography",
