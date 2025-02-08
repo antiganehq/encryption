@@ -11,7 +11,6 @@ export interface EncryptedData {
 }
 
 export interface OpenLockConfig {
-  enabled: boolean;
   expiresAt: number;
   hashedPassword: number[];
 }
@@ -33,37 +32,34 @@ export class AntigeneEncryption {
     this.s = [];
     this.e = [];
     this.lock = {
-      enabled: false,
       expiresAt: 0,
       hashedPassword: []
     };
   }
 
   // Lock System ================================
-  public async openLock(minutes: number = 10, password: string, dummyData: EncryptedData): Promise<void> {
+  public async openLock(minutes: number = 10, password: string, dummyData: EncryptedData): Promise<OpenLockConfig> {
     const hashedPassword = await this.generateHash(password);
     const decryptMsg = await this.decrypt(dummyData, password);
     if (decryptMsg.split('').some(char => char.charCodeAt(0) > 127)) {
       throw new Error("Incorrect password");
     } else {
       this.lock = {
-        enabled: true,
         expiresAt: Date.now() + minutes * 60 * 1000,
         hashedPassword: hashedPassword
       };
+      return this.lock
     }
   }
 
   public closeLock(): void {
     this.lock = {
-      enabled: false,
       expiresAt: 0,
       hashedPassword: []
     };
   }
 
   public isLockOpen(): boolean {
-    if (!this.lock.enabled) return false;
     if (Date.now() > this.lock.expiresAt) {
       this.closeLock();
       return false;
