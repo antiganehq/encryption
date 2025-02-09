@@ -7,11 +7,6 @@ async function runTests() {
     const password = "password123";
 
     try {
-        if (encryptionService.isLockOpen()) {
-            console.log('OpenLock is active.');
-        } else {
-            console.error('OpenLock not activate.');
-        }
         // Contoh enkripsi
         console.log('Encrypting message:', message);
         const encrypted = await encryptionService.encrypt(message, password);
@@ -31,16 +26,6 @@ async function runTests() {
 
         // Contoh penggunaan OpenLock
         console.log('\nTesting OpenLock feature...');
-        await encryptionService.openLock(0.1, "password", encrypted);
-        if (encryptionService.isLockOpen()) {
-            console.log('OpenLock is active.');
-        } else {
-            console.error('OpenLock failed to activate.');
-        }
-
-        // Enkripsi tanpa password setelah lock terbuka
-        const dcc = await encryptionService.decrypt(encrypted);
-        console.log('Decrypted message with OpenLock:', dcc);
 
     } catch (error) {
         console.error('Error during testing', error);
